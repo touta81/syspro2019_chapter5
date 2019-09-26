@@ -2,6 +2,8 @@
 
 from smbus2 import SMBus
 import time
+import datetime as dt
+import json as js
 
 bus_number  = 1
 i2c_address = 0x76
@@ -11,6 +13,8 @@ bus = SMBus(bus_number)
 digT = []
 digP = []
 digH = []
+
+temp,pres,hum
 
 t_fine = 0.0
 
@@ -93,6 +97,7 @@ def compensate_P(adc_P):
 	pressure = pressure + ((v1 + v2 + digP[6]) / 16.0)
 
 	print "pressure : %7.2f hPa" % (pressure/100)
+        pres=pressure/100
 
 def compensate_T(adc_T):
 	global t_fine
@@ -101,6 +106,7 @@ def compensate_T(adc_T):
 	t_fine = v1 + v2
 	temperature = t_fine / 5120.0
 	print "temp : %-6.2f ℃" % (temperature)
+        temp=temperature
 
 def compensate_H(adc_H):
 	global t_fine
@@ -115,6 +121,7 @@ def compensate_H(adc_H):
 	elif var_h < 0.0:
 		var_h = 0.0
 	print "hum : %6.2f ％" % (var_h)
+        hum=var_h
 
 
 def setup():
@@ -140,9 +147,17 @@ get_calib_param()
 
 
 if __name__ == '__main__':
+    dic={}
     for i in range(5):
         try:
 		readData()
+                dic0={"id"+i:{"time":dt.datetime.now(),"temp":temp,"pres":pres,"hum":hum}}
+                dic.update(dic0)
                 time.sleep(10.0)
 	except KeyboardInterrupt:
 		pass
+
+    jstr=js.dumps(dic)
+
+    with open('temp.json','w') as f:
+        js.dump(jstr,f,ensure_ascii=False,indent=4)
