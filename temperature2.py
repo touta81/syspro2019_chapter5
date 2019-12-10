@@ -2,7 +2,7 @@
 
 from smbus2 import SMBus
 import time
-import datetime as dt
+from datetime import datetime,date
 import json as js
 
 bus_number  = 1
@@ -14,7 +14,9 @@ digT = []
 digP = []
 digH = []
 
-temp,pres,hum
+temp=0.0
+pres=0.0
+hum=0.0
 
 t_fine = 0.0
 
@@ -142,6 +144,11 @@ def setup():
 	writeReg(0xF5,config_reg)
 
 
+def json_serial(obj):
+    if isinstance(obj,(datetime,date)):
+        return obj.isoformat()
+    raise TypeError("Type %s is not serializable" % type(obj))
+
 setup()
 get_calib_param()
 
@@ -150,14 +157,15 @@ if __name__ == '__main__':
     dic={}
     for i in range(5):
         try:
+                print("id:"+str(i))
 		readData()
-                dic0={"id"+i:{"time":dt.datetime.now(),"temp":temp,"pres":pres,"hum":hum}}
+                dic0={"id"+str(i):{"time":datetime.now(),"temp":temp,"pres":pres,"hum":hum}}
                 dic.update(dic0)
                 time.sleep(10.0)
 	except KeyboardInterrupt:
 		pass
 
-    jstr=js.dumps(dic)
+    jstr=js.dumps(dic,default=json_serial)
 
     with open('temp.json','w') as f:
         js.dump(jstr,f,ensure_ascii=False,indent=4)
